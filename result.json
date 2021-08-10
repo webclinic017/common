@@ -1,0 +1,59 @@
+{
+    "info": [{
+        "account": "373396",
+        "currency": "XBt",
+        "riskLimit": "1000000000000",
+        "prevState": "",
+        "state": "",
+        "action": "",
+        "amount": "1000941",
+        "pendingCredit": "0",
+        "pendingDebit": "0",
+        "confirmedDebit": "0",
+        "prevRealisedPnl": "941",
+        "prevUnrealisedPnl": "0",
+        "grossComm": "0",
+        "grossOpenCost": "0",
+        "grossOpenPremium": "0",
+        "grossExecCost": "0",
+        "grossMarkValue": "0",
+        "riskValue": "0",
+        "taxableMargin": "0",
+        "initMargin": "0",
+        "maintMargin": "0",
+        "sessionMargin": "0",
+        "targetExcessMargin": "0",
+        "varMargin": "0",
+        "realisedPnl": "0",
+        "unrealisedPnl": "0",
+        "indicativeTax": "0",
+        "unrealisedProfit": "0",
+        "syntheticMargin": None,
+        "walletBalance": "1000941",
+        "marginBalance": "1000941",
+        "marginBalancePcnt": "1",
+        "marginLeverage": "0",
+        "marginUsedPcnt": "0",
+        "excessMargin": "1000941",
+        "excessMarginPcnt": "1",
+        "availableMargin": "1000941",
+        "withdrawableMargin": "1000941",
+        "timestamp": "2021-08-09T12:00:00.158Z",
+        "grossLastValue": "0",
+        "commission": None
+    }],
+    "BTC": {
+        "free": 0.01000941,
+        "used": 0.0,
+        "total": 0.01000941
+    },
+    "free": {
+        "BTC": 0.01000941
+    },
+    "used": {
+        "BTC": 0.0
+    },
+    "total": {
+        "BTC": 0.01000941
+    }
+}
