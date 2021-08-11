@@ -11,7 +11,7 @@ if 'test' in bitmex.urls:
         'http': 'http://127.0.0.1:10809',
         'https': 'http://127.0.0.1:10809'
     }
-       
+
 bitmex.load_markets()
 
 # print(json.dumps(bitmex.load_markets()['BTC/USD'], indent=4))
@@ -23,4 +23,10 @@ bitmex.load_markets()
 
 # print(json.dumps(bitmex.fetch_ticker('BTC/USD'), indent=4))
 
-print(bitmex.fetch_balance())
+# print(bitmex.fetch_balance())
+
+# print(bitmex.fetch_orders(symbol='BTC/USD'))
+
+# print(bitmex.fetch_trades(symbol='BTC/USD'))
+if bitmex.has['fetchOpenOrders']:
+    print(bitmex.fetchClosedOrders(symbol='BTC/USD'))
