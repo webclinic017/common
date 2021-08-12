@@ -1,7 +1,6 @@
 import ccxt
 
 binance = ccxt.binance()
-
 if 'test' in binance.urls:
     binance.urls['api'] = binance.urls['test']
     binance.apiKey = 'c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7'
@@ -11,8 +10,7 @@ if 'test' in binance.urls:
         'https': 'http://127.0.0.1:10809'
     }
 
-# print(binance.fetch_balance({"type" : "future"}))
-
-# print(binance.create_order(symbol='BTC/USDT', type='market', side='buy', amount=10, params={"type":"future"}))
-
-print(binance.create_order(symbol='BTC/USDT', type='market', side='sell', amount=10, params={"type":"future"}))
+# print(binance.fapiPrivatePostPositionSideDual({"dualSidePosition" : "true"}))
+binance.create_order(symbol='BTCUSDT', type='market', side='buy', amount=1, params={"type": "future", "positionSide" : 'SHORT'})
+# binance.load_markets()
+# print(binance.symbols)
