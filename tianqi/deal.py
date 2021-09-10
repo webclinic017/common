@@ -1,6 +1,5 @@
 import ccxt
 
-
 class Exchange():
 
     def __init__(self) -> None:
@@ -15,4 +14,12 @@ class Exchange():
             }
 
     def create_order(self, symbol, type, side, amount, positionSide):
-        self.binance.create_order(symbol=symbol, type=type, side=side, amount=amount, params={"type": "future", "positionSide" : positionSide})
+        self.binance.create_order(symbol=symbol, type=type, side=side, amount=amount, params={
+                                  "type": "future", "positionSide": positionSide})
+
+
+if __name__ == '__main__':
+    exchange = Exchange()
+
+    exchange.binance.create_order(symbol='BTC/USDT', type='MARKET', side='BUY',
+                                  amount=5, params={"type": "future", "positionSide": 'LONG'})

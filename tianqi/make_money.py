@@ -40,6 +40,8 @@ async def fetch_data(uri, header):
                 # 下单数据重复推送，只解析第1次推送的
                 if (message_bytes_new != message_bytes_unique):
                     message_bytes_unique = message_bytes_new
+                    
+                    print(message_bytes_new)
 
                     # 字节转json
                     jsonobj = json.loads(message_bytes_new)

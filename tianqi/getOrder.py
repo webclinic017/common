@@ -5,6 +5,7 @@ from aiowebsocket.converses import AioWebSocket
 
 single = 0
 
+
 async def fetch_data(uri, header):
     async with AioWebSocket(uri, union_header=header, timeout=1000) as aws:
         converse = aws.manipulator
@@ -12,10 +13,13 @@ async def fetch_data(uri, header):
         await converse.send(message)
         while True:
             mes = await converse.receive()
+            print('{time}-Client receive: {rec}'
+                  .format(time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), rec=str(mes)[0:50]))
             # if str(mes).find('"isUpdate":true') != -1:
-            if str(mes).find('"isUpdate":false') != -1:
-                print('{time}-Client receive: {rec}'
-                      .format(time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), rec=str(mes)[0:50]))
+            # if str(mes).find('"isUpdate":false') != -1:
+            #     print('{time}-Client receive: {rec}'
+            #           .format(time=datetime.now().strftime('%Y-%m-%d %H:%M:%S'), rec=str(mes)[0:50]))
+            await converse.send('ping')
 
 
 def start_up():
@@ -23,7 +27,7 @@ def start_up():
     header = {"Pragma": "no-cache",
               "Origin": "https://www.tianqi.one",
               "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-              "Sec-WebSocket-Key": "9c9bFnDJJTJjL/ItR6cwrw==",
+              "Sec-WebSocket-Key": "sX61VsxITpSgC+fyZx8zew==",
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML:like Gecko) Chrome/91.0.4472.164 Safari/537.36",
               "Upgrade": "websocket",
               "Sec-WebSocket-Extensions": "permessage-deflate; client_max_window_bits",
@@ -40,9 +44,9 @@ def start_up():
 
 
 if __name__ == '__main__':
-    
+
     start_up()
-    
+
     while True:
         if single == 1:
             start_up()

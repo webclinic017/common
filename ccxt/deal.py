@@ -13,5 +13,5 @@ class Exchange():
                 'https': 'http://127.0.0.1:10809'
             }
 
-    def create_order(self, symbol, type, side, amount):
-        self.binance.create_order(symbol=symbol, type=type,side=side, amount=amount, params={"type": "future"})
+    def create_order(self, symbol, type, side, amount, positionSide):
+        self.binance.create_order(symbol=symbol, type=type,side=side, amount=amount, params={"type": "future", "positionSide" : positionSide})

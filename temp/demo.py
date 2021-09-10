@@ -46,7 +46,7 @@ def fetch_balance():
     p['signature'] = hashing(param2string(p))
     # print(baseUrl+'/fapi/v1/time')
     response = requests.post(url=baseUrl+'/fapi/v2/balance',
-                            headers={'X-MBX-APIKEY': apiKey}, data=p, proxies=proxies)
+                             headers={'X-MBX-APIKEY': apiKey}, data=p, proxies=proxies)
     print(response.status_code)
 
 

@@ -1,4 +1,7 @@
 import ccxt
+import json
+import jsonpath
+import deal
 
 binance = ccxt.binance()
 if 'test' in binance.urls:
@@ -9,8 +12,5 @@ if 'test' in binance.urls:
         'http': 'http://127.0.0.1:10809',
         'https': 'http://127.0.0.1:10809'
     }
-
-# print(binance.fapiPrivatePostPositionSideDual({"dualSidePosition" : "true"}))
-binance.create_order(symbol='BTCUSDT', type='market', side='buy', amount=1, params={"type": "future", "positionSide" : 'SHORT'})
-# binance.load_markets()
-# print(binance.symbols)
+    
+binance.create_order(symbol='BTC/USDT', type='market', side='buy', amount=5, params={"type": "future", "positionSide" : 'LONG'})
