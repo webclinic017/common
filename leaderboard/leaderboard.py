@@ -1,3 +1,4 @@
+import json
 import requests
 import time
 import datetime
@@ -167,13 +168,10 @@ def modifyprocess(nowdict, olddict):
                 "quantity": qty,
             }
             if side == "BUY":
-                price = float(exchange.price_to_precision(
-                    sym, ori_pri * (1 - firstrate)))
+                price = float(exchange.price_to_precision(sym, ori_pri * (1 - firstrate)))
             else:
-                price = float(exchange.price_to_precision(
-                    sym, ori_pri * (1 + firstrate)))
-            exchange.create_order(sym, "LIMIT", side,
-                                  qty, price, params=params)
+                price = float(exchange.price_to_precision(sym, ori_pri * (1 + firstrate)))
+            exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
 
             qty = ori_qty / qtyrate / 4 * 2
             qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
@@ -401,7 +399,7 @@ def delta_data(nowdata, olddata):
 
 if __name__ == '__main__':
     message = '{"symbol":"BTCUSDT","entryPrice":66666,"markPrice":67000,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":10,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    openprocess(message)
+    openprocess(json.loads(message))
     
     
     # print(person["name"])

@@ -12,9 +12,6 @@ exchange = ccxt.binance({
 })
 
 exchange.set_sandbox_mode(True)
+exchange.load_markets()
 
-markets = exchange.load_markets()
-
-exchange.verbose = True
-
-balance = exchange.fetch_balance()
+print(exchange.markets_by_id["BTCUSDT"]["symbol"])
