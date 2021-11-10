@@ -3,6 +3,7 @@ import time
 import datetime
 import ccxt
 import csv
+import json
 
 # key
 key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
@@ -254,9 +255,9 @@ def openprocess(nowdict):
     }
     for index in range(1, lossLimitNum):
         if side == "BUY":
-            price = float(exchange.price_to_precision(sym, ori_pri * (1 - lossRate.get(sym,2)/100*index)))
+            price = float(exchange.price_to_precision(sym, ori_pri * (1 - lossRate.get(sym,2) / lossLimitNum / 100 * index)))
         else:
-            price = float(exchange.price_to_precision(sym, ori_pri * (1 + lossRate.get(sym,2)/100*index)))
+            price = float(exchange.price_to_precision(sym, ori_pri * (1 + lossRate.get(sym,2) / lossLimitNum / 100 * index)))
         exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
         print("%s \t 限价挂单 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, side, params["positionSide"], 'LIMIT', price, qty, sym))
     print("##### ##### binance end ##### #####\n")
@@ -400,8 +401,8 @@ def delta_data(nowdata, olddata):
 
 
 if __name__ == '__main__':
-    message = '{"symbol":"BTCUSDT","entryPrice":66666,"markPrice":67000,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":10,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    openprocess(message)
+    message = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":0.1,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
+    openprocess(json.loads(message))
     
     
     # print(person["name"])
