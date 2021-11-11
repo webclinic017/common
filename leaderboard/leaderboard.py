@@ -296,7 +296,7 @@ def modifyprocess(nowdict, olddict):
         for p in my_positions:
             if p["info"]["positionSide"] == position:
                 myqty = float(p["info"]["positionAmt"])
-        act_qty = max(float(exchange.amount_to_precision(sym, abs(ori_qty) / abs(old_qty) / qtyrate * myqty)), minqty)
+        act_qty = max(float(exchange.amount_to_precision(sym, abs(ori_qty) / abs(old_qty) * abs(myqty))), minqty)
         params = {
             "positionSide": position,
             "quantity": act_qty,
@@ -306,7 +306,7 @@ def modifyprocess(nowdict, olddict):
         print("##### ##### binance start ##### #####")
         print("order:", ret)
         t_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
-        print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["price"], ret["origQty"], ret["symbol"]))
+        print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["avgPrice"], ret["origQty"], ret["symbol"]))
         print("##### ##### binance end ##### #####\n")    
         print("##### ##### leaderboard end(减仓) ##### #####")
 
@@ -371,8 +371,8 @@ def delta_data(nowdata, olddata):
 
 if __name__ == '__main__':
     
-    message1 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":10,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    message2 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":30,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
+    message1 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":-100,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
+    message2 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":-400,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
     modifyprocess(json.loads(message1), json.loads(message2))
     
     # print(person["name"])
