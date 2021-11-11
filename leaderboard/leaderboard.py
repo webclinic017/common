@@ -4,6 +4,7 @@ import time
 import datetime
 import ccxt
 import csv
+import json
 
 # key
 key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
@@ -13,7 +14,7 @@ secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
 person = {"name": "TraderT",
           "encryptedUid": "CCF3E0CB0AAD54D9D6B4CEC5E3E741D2", "tradeType": "PERPETUAL"}
 # 比例
-qtyrate = 200
+qtyrate = 10
 
 DEBUG = True
 
@@ -95,99 +96,7 @@ def getjson():
             if DEBUG:
                 text = req.text
                 print("Except:", text)
-
-
-def modifyprocess(nowdict, olddict):
-    global exchange
-    nowsym = nowdict["symbol"]
-    nowqty = nowdict["amount"]
-    nowprc = nowdict["entryPrice"]
-    oldsym = olddict["symbol"]
-    oldqty = olddict["amount"]
-    oldprc = olddict["entryPrice"]
-    sym = exchange.markets_by_id[nowsym]["symbol"]
-    minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
-    ori_qty = nowqty - oldqty
-
-    if (ori_qty > 0):
-        side = "BUY"
-    else:
-        side = "SELL"
-    if (oldqty > 0):
-        position = "LONG"
-    else:
-        position = "SHORT"
-
-    price = float(exchange.price_to_precision(sym, nowprc))
-
-    print("\n##### ##### leaderboard start(modify) ##### #####")
-    temptime = datetime.datetime.now()
-    print("nowdict", nowdict)
-    print("olddict", olddict)
-    print("order:modify\t",
-          "symbol:%s\t" % (sym),
-          "position:%s\t" % (position),
-          "side:%s\t" % (side),
-          "quantity:%.5f\t" % (ori_qty),
-          "price:%.5f\t" % (price),
-          "time:%s" % (temptime)
-          )
-    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price,
-           "operate": "modify"}
-    csv_w.writerow(row)
-    csv_f.flush()
-    print("##### ##### leaderboard end  (modify) ##### #####")
-
-    if (not DEBUG):
-        # 市价单部分
-        ori_pri = price
-        qty = ori_qty / qtyrate / 4
-        qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
-        params = {
-            "positionSide": position,
-            "quantity": qty,
-        }
-        order = exchange.create_order(
-            sym, "MARKET", side, qty, ori_pri, params=params)
-        ret = order["info"]
-
-        print("##### ##### binance start ##### #####")
-        print("order:", ret)
-        t_str = time.strftime("%Y-%m-%d %H:%M:%S",
-                              time.localtime(int(ret["updateTime"]) / 1000))
-        print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (
-            t_str, ret["side"], ret["positionSide"], ret["origType"], ret["price"], ret["origQty"],
-            ret["symbol"]))
-        print("##### ##### binance end ##### #####\n")
-        # 限价单部分
-        if ((position == "LONG" and side == "BUY") or (position == "SHORT" and side == "SELL")):
-            qty = ori_qty / qtyrate / 4 * 1
-            qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
-            params = {
-                "positionSide": position,
-                "quantity": qty,
-            }
-            if side == "BUY":
-                price = float(exchange.price_to_precision(sym, ori_pri * (1 - firstrate)))
-            else:
-                price = float(exchange.price_to_precision(sym, ori_pri * (1 + firstrate)))
-            exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
-
-            qty = ori_qty / qtyrate / 4 * 2
-            qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
-            params = {
-                "positionSide": position,
-                "quantity": qty,
-            }
-            if side == "BUY":
-                price = float(exchange.price_to_precision(
-                    sym, ori_pri * (1 - secrate)))
-            else:
-                price = float(exchange.price_to_precision(
-                    sym, ori_pri * (1 + secrate)))
-            exchange.create_order(sym, "LIMIT", side,
-                                  qty, price, params=params)
-
+                
 # 开仓、加仓
 def openprocess(nowdict):
     sym = exchange.markets_by_id[nowdict["symbol"]]["symbol"]
@@ -217,7 +126,7 @@ def openprocess(nowdict):
     csv_w.writerow(row)
     csv_f.flush()
     print("##### ##### leaderboard end  (open) ##### #####")
-        # 市价单部分
+    # 市价单部分
     ori_pri = price
     qty = ori_qty / qtyrate / 4
     qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
@@ -250,16 +159,16 @@ def openprocess(nowdict):
         "positionSide": position,
         "quantity": qty,
     }
-    for index in range(1, lossLimitNum):
+    for index in range(1, lossLimitNum + 1):
         if side == "BUY":
-            price = float(exchange.price_to_precision(sym, ori_pri * (1 - lossRate.get(sym,2)/100*index)))
+            price = float(exchange.price_to_precision(sym, ori_pri * (1 - lossRate.get(sym,2) / lossLimitNum / 100 * index)))
         else:
-            price = float(exchange.price_to_precision(sym, ori_pri * (1 + lossRate.get(sym,2)/100*index)))
+            price = float(exchange.price_to_precision(sym, ori_pri * (1 + lossRate.get(sym,2) / lossLimitNum / 100 * index)))
         exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
         print("%s \t 限价挂单 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, side, params["positionSide"], 'LIMIT', price, qty, sym))
     print("##### ##### binance end ##### #####\n")
-
-
+    
+# 平仓
 def cleanprocess(olddict):
     sym = exchange.markets_by_id[olddict["symbol"]]["symbol"]
     minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
@@ -335,7 +244,71 @@ def cleanprocess(olddict):
                 }
                 order = exchange.create_order(
                     sym, "MARKET", side, qty, params=params)
-
+                
+# 加减仓
+def modifyprocess(nowdict, olddict):
+    '''
+        加减仓策略:
+            1、如果是加仓，将加仓的数量计算出来，调用开仓逻辑
+            2、如果是减仓，查询当前持仓，按交易员减仓比例平仓
+    '''
+    global exchange
+    now_sym = nowdict["symbol"]
+    now_qty = nowdict["amount"]
+    now_prc = nowdict["entryPrice"]
+    old_qty = olddict["amount"]
+    
+    # 判断加仓还是减仓
+    if (abs(now_qty) > abs(old_qty)):
+        ori_qty = now_qty - old_qty
+        nowdict["amount"] = ori_qty
+        openprocess(nowdict)
+    else:
+        sym = exchange.markets_by_id[now_sym]["symbol"]
+        minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
+        ori_qty = now_qty - old_qty
+        if (ori_qty > 0):
+            side = "BUY"
+        else:
+            side = "SELL"
+        if (old_qty > 0):
+            position = "LONG"
+        else:
+            position = "SHORT"
+        price = float(exchange.price_to_precision(sym, now_prc))
+        print("\n##### ##### leaderboard start(减仓) ##### #####")
+        temptime = datetime.datetime.now()
+        print("nowdict", nowdict)
+        print("olddict", olddict)
+        print("order:modify\t",
+            "symbol:%s\t" % (sym),
+            "position:%s\t" % (position),
+            "side:%s\t" % (side),
+            "quantity:%.5f\t" % (abs(ori_qty)),
+            "price:%.5f\t" % (price),
+            "time:%s" % (temptime)
+            )
+        row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': abs(ori_qty), "price": price, "operate": "减仓"}
+        csv_w.writerow(row)
+        csv_f.flush()
+        # 查询当前持仓
+        my_positions = exchange.fetch_positions(symbols=sym)
+        for p in my_positions:
+            if p["info"]["positionSide"] == position:
+                myqty = float(p["info"]["positionAmt"])
+        act_qty = max(float(exchange.amount_to_precision(sym, abs(ori_qty) / abs(old_qty) / qtyrate * myqty)), minqty)
+        params = {
+            "positionSide": position,
+            "quantity": act_qty,
+        }
+        order = exchange.create_order(sym, "MARKET", side, act_qty, price, params=params)
+        ret = order["info"]
+        print("##### ##### binance start ##### #####")
+        print("order:", ret)
+        t_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
+        print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["price"], ret["origQty"], ret["symbol"]))
+        print("##### ##### binance end ##### #####\n")    
+        print("##### ##### leaderboard end(减仓) ##### #####")
 
 def delta_data(nowdata, olddata):
     global exchange, qtyrate
@@ -362,8 +335,7 @@ def delta_data(nowdata, olddata):
                 sameflag = True
                 tempdata[index] = None
                 sym = exchange.markets_by_id[nowsym]["symbol"]
-                minqty = float(
-                    exchange.markets[sym]['info']['filters'][1]['minQty'])
+                minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
                 if (abs(nowqty - oldqty) > minqty * 4 * qtyrate and abs(nowqty - oldqty) * price > 6 * 4 * qtyrate):
                     # 加减仓
                     try:
@@ -398,9 +370,10 @@ def delta_data(nowdata, olddata):
 
 
 if __name__ == '__main__':
-    message = '{"symbol":"BTCUSDT","entryPrice":66666,"markPrice":67000,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":10,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    openprocess(json.loads(message))
     
+    message1 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":10,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
+    message2 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":30,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
+    modifyprocess(json.loads(message1), json.loads(message2))
     
     # print(person["name"])
 
