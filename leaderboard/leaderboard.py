@@ -4,7 +4,7 @@ import time
 import datetime
 import ccxt
 import csv
-import json
+import copy
 
 # key
 key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
@@ -14,7 +14,7 @@ secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
 person = {"name": "TraderT",
           "encryptedUid": "CCF3E0CB0AAD54D9D6B4CEC5E3E741D2", "tradeType": "PERPETUAL"}
 # 比例
-qtyrate = 10
+qtyrate = 1000
 
 DEBUG = True
 
@@ -98,7 +98,9 @@ def getjson():
                 print("Except:", text)
                 
 # 开仓、加仓
-def openprocess(nowdict):
+def openprocess(nowdict, openflag=True):
+    # 判断是加仓还是开仓
+    openstr = "开仓" if openflag else "加仓"
     sym = exchange.markets_by_id[nowdict["symbol"]]["symbol"]
     minqty = max(float(6 / nowdict["entryPrice"]), float(exchange.markets[sym]['info']['filters'][1]['minQty']))
     minqty = float(exchange.amount_to_precision(sym, abs(minqty)))
@@ -111,10 +113,11 @@ def openprocess(nowdict):
         side = "SELL"
         position = "SHORT"
     price = float(exchange.price_to_precision(sym, nowdict["entryPrice"]))
-    print("\n##### ##### leaderboard start(open) ##### #####")
+    print("\n##### ##### leaderboard start(%s) ##### #####" % openstr)
     temptime = datetime.datetime.now()
     print("nowdict", nowdict)
-    print("order:open\t",
+    print("交易员:%s\t" % person["name"], 
+          "orderType:%s\t" % openstr,
           "symbol:%s\t" % (sym),
           "position:%s\t" % (position),
           "side:%s\t" % (side),
@@ -125,7 +128,6 @@ def openprocess(nowdict):
     row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "open"}
     csv_w.writerow(row)
     csv_f.flush()
-    print("##### ##### leaderboard end  (open) ##### #####")
     # 市价单部分
     ori_pri = price
     qty = ori_qty / qtyrate / 4
@@ -137,10 +139,9 @@ def openprocess(nowdict):
     order = exchange.create_order(sym, "MARKET", side, qty, ori_pri, params)
     ret = order["info"]
 
-    print("##### ##### binance start ##### #####")
     print("order:", ret)
     t_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
-    print("%s \t 市价成交 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["price"], ret["origQty"], ret["symbol"]))
+    print("%s \t 市价成交 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["avgPrice"], ret["origQty"], ret["symbol"]))
 
     # 限价单部分
     # 以交易员的成交价挂单
@@ -166,10 +167,11 @@ def openprocess(nowdict):
             price = float(exchange.price_to_precision(sym, ori_pri * (1 + lossRate.get(sym,2) / lossLimitNum / 100 * index)))
         exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
         print("%s \t 限价挂单 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, side, params["positionSide"], 'LIMIT', price, qty, sym))
-    print("##### ##### binance end ##### #####\n")
+
+    print("##### ##### leaderboard end (%s) ##### #####" % openstr)
     
 # 平仓
-def cleanprocess(olddict):
+def closeprocess(olddict):
     sym = exchange.markets_by_id[olddict["symbol"]]["symbol"]
     minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
 
@@ -178,13 +180,11 @@ def cleanprocess(olddict):
     if (ori_qty > 0):
         side = "BUY"
         position = "SHORT"
-        pos_num = 2
     else:
         side = "SELL"
         position = "LONG"
-        pos_num = 1
     price = float(exchange.price_to_precision(sym, olddict["markPrice"]))
-    print("\n##### ##### leaderboard start(close) ##### #####")
+    print("\n##### ##### leaderboard start(清仓) ##### #####")
     temptime = datetime.datetime.now()
     print("olddict", olddict)
     print("order:close\t",
@@ -195,55 +195,26 @@ def cleanprocess(olddict):
           "price:%.5f\t" % (price),
           "time:%s" % (temptime)
           )
-    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price,
-           "operate": "close"}
+    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "close"}
     csv_w.writerow(row)
     csv_f.flush()
-    print("##### ##### leaderboard end  (close) ##### #####")
-    if (not DEBUG):
-        # 市价单部分
-        # qty = ori_qty / qtyrate
-        # qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
-        qty = abs(float(exchange.fetch_positions(
-            sym)[pos_num]["info"]["positionAmt"]))
-        print("clean qty:", qty)
-        params = {
-            "positionSide": position,
-            "quantity": qty
-        }
-        try:
-            order = exchange.create_order(
-                sym, "MARKET", side, qty, params=params)
-            ret = order["info"]
+    params = {
+        "positionSide": position,
+        "quantity": abs(ori_qty)
+    }
+    order = exchange.create_order(sym, "MARKET", side, abs(ori_qty), params=params)
+    ret = order["info"]
 
-            print("##### ##### binance start ##### #####")
-            print("order:", ret)
-            t_str = time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
-            print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (
-                t_str, ret["side"], ret["positionSide"], ret["origType"], ret["avgPrice"], ret["origQty"], ret["symbol"]))
-            print("##### ##### binance end ##### #####\n")
-        except Exception as e:
-            print("close failed")
-        # 限价单取消
-        orders = exchange.fetch_open_orders(sym)
-        for order in orders:
-            try:
-                print("==>cancel :%s \t amount:%s \t price:%s" %
-                      (order['id'], order["remaining"], order["price"]))
-                exchange.cancel_order(order['id'], sym)
-            except Exception as e:
-                # 取消失败
-                print("cancel Exception:", e)
-                qty = abs(float(exchange.fetch_positions(
-                    sym)[pos_num]["info"]["positionAmt"]))
-                print("clean qty:", qty)
-                params = {
-                    "positionSide": position,
-                    "quantity": qty
-                }
-                order = exchange.create_order(
-                    sym, "MARKET", side, qty, params=params)
+    print("order:", ret)
+    t_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
+    print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["avgPrice"], ret["origQty"], ret["symbol"]))
+    # 限价单取消
+    orders = exchange.fetch_open_orders(sym)
+    for order in orders:
+        exchange.cancel_order(order['id'], sym)
+        print("==>cancel :%s \t symbol:%s\t amount:%s \t price:%s" % (order['id'], order['symbol'], order["remaining"], order["price"]))
+        
+    print("##### ##### leaderboard end (清仓) ##### #####")
                 
 # 加减仓
 def modifyprocess(nowdict, olddict):
@@ -262,7 +233,7 @@ def modifyprocess(nowdict, olddict):
     if (abs(now_qty) > abs(old_qty)):
         ori_qty = now_qty - old_qty
         nowdict["amount"] = ori_qty
-        openprocess(nowdict)
+        openprocess(nowdict, False)
     else:
         sym = exchange.markets_by_id[now_sym]["symbol"]
         minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
@@ -280,7 +251,8 @@ def modifyprocess(nowdict, olddict):
         temptime = datetime.datetime.now()
         print("nowdict", nowdict)
         print("olddict", olddict)
-        print("order:modify\t",
+        print("交易员:%s\t" % person["name"],
+            "orderType:减仓\t",
             "symbol:%s\t" % (sym),
             "position:%s\t" % (position),
             "side:%s\t" % (side),
@@ -303,18 +275,15 @@ def modifyprocess(nowdict, olddict):
         }
         order = exchange.create_order(sym, "MARKET", side, act_qty, price, params=params)
         ret = order["info"]
-        print("##### ##### binance start ##### #####")
         print("order:", ret)
         t_str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(ret["updateTime"]) / 1000))
         print("%s \t %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, ret["side"], ret["positionSide"], ret["origType"], ret["avgPrice"], ret["origQty"], ret["symbol"]))
-        print("##### ##### binance end ##### #####\n")    
         print("##### ##### leaderboard end(减仓) ##### #####")
 
 def delta_data(nowdata, olddata):
     global exchange, qtyrate
-    tempdata = olddata.copy()
+    tempdata = copy.deepcopy(olddata)
 
-    changeFlag = False
     for nowdict in nowdata:
         # 区分是要修改还是开仓
         sameflag = False
@@ -341,8 +310,7 @@ def delta_data(nowdata, olddata):
                     try:
                         modifyprocess(nowdict, olddict)
                     except Exception as e:
-                        print("modifyprocess failed")
-                    changeFlag = True
+                        print("modifyprocess failed", e)
                 break
 
         # 开仓
@@ -350,47 +318,32 @@ def delta_data(nowdata, olddata):
             try:
                 openprocess(nowdict)
             except Exception as e:
-                print("openprocess failed")
-            changeFlag = True
+                print("openprocess failed", e)
 
     # 清仓
     for index, olddict in enumerate(tempdata):
         if olddict == None:
             continue
         try:
-            cleanprocess(olddict)
+            closeprocess(olddict)
         except Exception as e:
-            print("cleanprocess failed")
-        changeFlag = True
-
-    if changeFlag:
-        return nowdata.copy()
-    else:
-        return olddata.copy()
-
-
-if __name__ == '__main__':
+            print("closeprocess failed", e)
+            
+if __name__ == '__main__':    
     
-    message1 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":-100,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    message2 = '{"symbol":"BTCUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":-400,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false}'
-    modifyprocess(json.loads(message1), json.loads(message2))
-    
-    # print(person["name"])
+    print(person["name"])
 
-    # oldtime = time.time() * 1000
+    oldtime = time.time() * 1000
 
-    # olddata = getjson()
+    olddata = getjson()
     # printlist(olddata)
-    # while (True):
-    #     # time.sleep(0.1)
-    #     nowdata = getjson()
-    #     # printlist(nowdata)
-    #     data = olddata.copy()
-    #     # data = delta_data(nowdata, olddata)
-    #     try:
-    #         data = delta_data(nowdata, olddata)
-    #     except ccxt.ExchangeError as e:
-    #         print("ExchangeError:", e)
-    #     except Exception as e:
-    #         print("Except:", e)
-    #     olddata = data.copy()
+    while (True):
+        # time.sleep(0.1)
+        nowdata = getjson()
+        try:
+            delta_data(nowdata, olddata)
+        except ccxt.ExchangeError as e:
+            print("ExchangeError:", e)
+        except Exception as e:
+            print("Except:", e)
+        olddata = nowdata.copy()
