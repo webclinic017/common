@@ -11,8 +11,8 @@ key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
 secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
 
 # 交易员
-person = {"name": "TraderT",
-          "encryptedUid": "CCF3E0CB0AAD54D9D6B4CEC5E3E741D2", "tradeType": "PERPETUAL"}
+person = {"name": "SnowEzz",
+          "encryptedUid": "51B2DE4678FAD0EEF0FA1555B2D67528", "tradeType": "PERPETUAL"}
 # 比例
 qtyrate = 1000
 
@@ -45,9 +45,6 @@ lossRate = {
     'BTCUSDT': 1, 'ETHUSDT': 1,
 }
 lossLimitNum = 5
-
-firstrate = 0.015  # 第一次, 限价单亏损比例
-secrate = 0.065  # 第二次, 限价单亏损比例
 
 csvheaders = ['time', 'symol', 'position',
               'side', 'operate', 'quantity', "price"]
@@ -102,7 +99,7 @@ def openprocess(nowdict, openflag=True):
     # 判断是加仓还是开仓
     openstr = "开仓" if openflag else "加仓"
     sym = exchange.markets_by_id[nowdict["symbol"]]["symbol"]
-    minqty = max(float(6 / nowdict["entryPrice"]), float(exchange.markets[sym]['info']['filters'][1]['minQty']))
+    minqty = max(float(20 / nowdict["entryPrice"]), float(exchange.markets[sym]['info']['filters'][1]['minQty']))
     minqty = float(exchange.amount_to_precision(sym, abs(minqty)))
 
     ori_qty = float(nowdict["amount"])
@@ -125,7 +122,7 @@ def openprocess(nowdict, openflag=True):
           "price:%.5f\t" % (price),
           "time:%s" % (temptime)
           )
-    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "open"}
+    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": openstr}
     csv_w.writerow(row)
     csv_f.flush()
     # 市价单部分
@@ -195,7 +192,7 @@ def closeprocess(olddict):
           "price:%.5f\t" % (price),
           "time:%s" % (temptime)
           )
-    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "close"}
+    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "平仓"}
     csv_w.writerow(row)
     csv_f.flush()
     params = {
@@ -232,8 +229,9 @@ def modifyprocess(nowdict, olddict):
     # 判断加仓还是减仓
     if (abs(now_qty) > abs(old_qty)):
         ori_qty = now_qty - old_qty
-        nowdict["amount"] = ori_qty
-        openprocess(nowdict, False)
+        newdict = copy.deepcopy(nowdict)
+        newdict["amount"] = ori_qty
+        openprocess(newdict, False)
     else:
         sym = exchange.markets_by_id[now_sym]["symbol"]
         minqty = float(exchange.markets[sym]['info']['filters'][1]['minQty'])
@@ -336,9 +334,9 @@ if __name__ == '__main__':
     oldtime = time.time() * 1000
 
     olddata = getjson()
-    # printlist(olddata)
+    printlist(olddata)
     while (True):
-        # time.sleep(0.1)
+        # time.sleep(1)
         nowdata = getjson()
         try:
             delta_data(nowdata, olddata)
