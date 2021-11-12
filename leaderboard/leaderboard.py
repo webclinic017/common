@@ -11,33 +11,38 @@ key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
 secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
 
 # 交易员
-person = {"name": "TraderT",
-          "encryptedUid": "CCF3E0CB0AAD54D9D6B4CEC5E3E741D2", "tradeType": "PERPETUAL"}
+person = {"name": "SnowEzz", "encryptedUid": "51B2DE4678FAD0EEF0FA1555B2D67528", "tradeType": "PERPETUAL"}
 # 比例
-qtyrate = 200
+qtyrate = 100
 
 DEBUG = True
 
 # 构建 币安 平台
-exchange = ccxt.binance({
-    'apiKey': key,
-    'secret': secret,
-    'enableRateLimit': True,
-    'options': {'defaultType': 'future'},
-    'proxies': {
-        'http': 'http://127.0.0.1:10809',
-        'https': 'http://127.0.0.1:10809'
-    }
-})
-
-if DEBUG:
+if DEBUG :
+    exchange = ccxt.binance({
+        'apiKey': key,
+        'secret': secret,
+        'enableRateLimit': True,
+        'options': {'defaultType': 'future'},
+        'proxies': {
+            'http': 'http://127.0.0.1:10809',
+            'https': 'http://127.0.0.1:10809'
+        }
+    })
     exchange.set_sandbox_mode(True)
+else:
+    exchange = ccxt.binance({
+        'apiKey': key,
+        'secret': secret,
+        'enableRateLimit': True,
+        'options': {'defaultType': 'future'},
+    })
 
 markets = exchange.load_markets()
 # exchange.verbose = True
 
 # 排行榜链接
-urls = ["https://www.binancezh.top/bapi/futures/v1/public/future/leaderboard/getOtherPosition", ]
+urls = ["https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition", ]
 
 
 # 不同币种滑动比例
