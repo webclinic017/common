@@ -11,10 +11,10 @@ key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
 secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
 
 # 交易员
-person = {"name": "SnowEzz",
-          "encryptedUid": "51B2DE4678FAD0EEF0FA1555B2D67528", "tradeType": "PERPETUAL"}
+person = {"name": "TraderT",
+          "encryptedUid": "CCF3E0CB0AAD54D9D6B4CEC5E3E741D2", "tradeType": "PERPETUAL"}
 # 比例
-qtyrate = 1000
+qtyrate = 200
 
 DEBUG = True
 
@@ -195,11 +195,12 @@ def closeprocess(olddict):
     row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "平仓"}
     csv_w.writerow(row)
     csv_f.flush()
+    qty =  max(float(exchange.amount_to_precision(sym, abs(ori_qty) / qtyrate)), minqty)
     params = {
         "positionSide": position,
-        "quantity": abs(ori_qty)
+        "quantity": qty
     }
-    order = exchange.create_order(sym, "MARKET", side, abs(ori_qty), params=params)
+    order = exchange.create_order(sym, "MARKET", side, qty, params=params)
     ret = order["info"]
 
     print("order:", ret)
@@ -345,3 +346,8 @@ if __name__ == '__main__':
         except Exception as e:
             print("Except:", e)
         olddata = nowdata.copy()
+    
+    # olddata = json.loads('{"code":"000000","message":null,"messageDetail":null,"data":{"otherPositionRetList":[{"symbol":"GALAUSDT","entryPrice":68300,"markPrice":68300,"pnl":0,"roe":0,"updateTime":[2021,11,9,15,52,42,198000000],"amount":50,"updateTimeStamp":1636473162198,"yellow":false,"tradeBefore":false},{"symbol":"YFIUSDT","entryPrice":35074.73592209,"markPrice":34637.00000000,"pnl":-7462.52199979,"roe":-0.02527563,"updateTime":[2021,11,10,15,31,32,556000000],"amount":17.048,"updateTimeStamp":1636558292556,"yellow":false,"tradeBefore":false},{"symbol":"ALICEUSDT","entryPrice":13.33072864537,"markPrice":13.98300000,"pnl":27859.81432832,"roe":0.09329491,"updateTime":[2021,11,11,0,25,37,73000000],"amount":42712.0,"updateTimeStamp":1636590337073,"yellow":true,"tradeBefore":false},{"symbol":"GALAUSDT","entryPrice":0.0914108024921,"markPrice":0.08569770,"pnl":-24380.51713560,"roe":-0.13333147,"updateTime":[2021,11,11,0,43,44,872000000],"amount":4267476,"updateTimeStamp":1636591424872,"yellow":true,"tradeBefore":false}],"updateTime":[2021,11,10,14,59,55,375000000],"updateTimeStamp":1636556395375},"success":true}')
+    # nowdata = json.loads('{"code":"000000","message":null,"messageDetail":null,"data":{"otherPositionRetList":[{"symbol":"YFIUSDT","entryPrice":35074.73592209,"markPrice":34637.00000000,"pnl":-7462.52199979,"roe":-0.02527563,"updateTime":[2021,11,10,15,31,32,556000000],"amount":17.048,"updateTimeStamp":1636558292556,"yellow":false,"tradeBefore":false},{"symbol":"ALICEUSDT","entryPrice":13.33072864537,"markPrice":13.98300000,"pnl":27859.81432832,"roe":0.09329491,"updateTime":[2021,11,11,0,25,37,73000000],"amount":42712.0,"updateTimeStamp":1636590337073,"yellow":true,"tradeBefore":false},{"symbol":"GALAUSDT","entryPrice":0.0914108024921,"markPrice":0.08569770,"pnl":-24380.51713560,"roe":-0.13333147,"updateTime":[2021,11,11,0,43,44,872000000],"amount":4267476,"updateTimeStamp":1636591424872,"yellow":true,"tradeBefore":false}],"updateTime":[2021,11,10,14,59,55,375000000],"updateTimeStamp":1636556395375},"success":true}')
+    # delta_data(nowdata['data']['otherPositionRetList'], olddata['data']['otherPositionRetList'])
+    
