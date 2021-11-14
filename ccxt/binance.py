@@ -14,8 +14,14 @@ exchange = ccxt.binance({
 })
 
 # exchange.set_sandbox_mode(True)
+def format_josn_data(recv_msg):
+    print(json.dumps(recv_msg, indent=4))
+    
 exchange.load_markets()
+
+# format_josn_data(exchange.fetch_open_orders('OMG/USDT'))
+# exchange.set_margin_mode()
 
 # print(json.dumps(exchange.fetch_open_orders('LTC/USDT'), indent=4))
 # print(exchange.markets_by_id["BTCUSDT"]["symbol"])
-exchange.create_order(symbol='BTC/USDT', type='LIMIT', side='SELL', amount=0.007, price=65000, params={"positionSide": "LONG","quantity": 0.007,})
+exchange.create_order(symbol='IOTX/USDT', type='MARKET', side='BUY', amount=500, price=0, params={"positionSide": "SHORT","quantity": 500,})

@@ -5,15 +5,32 @@ import datetime
 import ccxt
 import csv
 import copy
+import configparser
+import os
+import sys
 
-# key
-key = "c97a7299646c0e447029850f0142b1f079f0d2e59440e7b7b134914de5a412f7"
-secret = "83b80fdc33a9ea68426bc0ef2efb39b4b5c722890ca899a23db71ef0188b6308"
+if len(sys.argv) != 2:
+    print('Error: 输入交易员')
+    exit(0)
 
-# 交易员
-person = {"name": "SnowEzz", "encryptedUid": "51B2DE4678FAD0EEF0FA1555B2D67528", "tradeType": "PERPETUAL"}
-# 比例
-qtyrate = 100
+trader = sys.argv[1]
+
+# 加载配置文件
+if not os.path.exists('config.ini'):
+    print('Error: 未找到配置文件')
+    exit(1)
+else:
+    try:
+        cf = configparser.ConfigParser()
+        cf.read('config.ini')
+        key = cf.get(trader, 'key')
+        secret = cf.get(trader, 'secret')
+        uid = cf.get(trader, 'uid')
+        person = {"name": trader, "encryptedUid": uid, "tradeType": "PERPETUAL"}
+        qtyrate = float(cf.get(trader, 'qtyrate'))
+    except Exception as e:
+        print('Error: 读取配置文件出错', e)
+        exit(2)
 
 DEBUG = True
 
@@ -30,6 +47,8 @@ if DEBUG :
         }
     })
     exchange.set_sandbox_mode(True)
+    urls = ["https://'www.binancezh.top/bapi/futures/v1/public/future/leaderboard/getOtherPosition", ]
+    # exchange.verbose = True
 else:
     exchange = ccxt.binance({
         'apiKey': key,
@@ -37,13 +56,10 @@ else:
         'enableRateLimit': True,
         'options': {'defaultType': 'future'},
     })
+    # 排行榜链接
+    urls = ["https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition", ]
 
 markets = exchange.load_markets()
-# exchange.verbose = True
-
-# 排行榜链接
-urls = ["https://www.binance.com/bapi/futures/v1/public/future/leaderboard/getOtherPosition", ]
-
 
 # 不同币种滑动比例
 lossRate = {
@@ -132,7 +148,7 @@ def openprocess(nowdict, openflag=True):
     csv_f.flush()
     # 市价单部分
     ori_pri = price
-    qty = ori_qty / qtyrate / 4
+    qty = ori_qty / qtyrate / 3
     qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
     params = {
         "positionSide": position,
@@ -147,7 +163,7 @@ def openprocess(nowdict, openflag=True):
 
     # 限价单部分
     # 以交易员的成交价挂单
-    qty = ori_qty / qtyrate / 4
+    qty = ori_qty / qtyrate / 3
     qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
     params = {
         "positionSide": position,
@@ -156,7 +172,7 @@ def openprocess(nowdict, openflag=True):
     exchange.create_order(sym, "LIMIT", side, qty, price, params=params)
     print("%s \t 限价挂单 %s %s \t %s \t 均价:%s \t 数量:%s \t 种类:%s" % (t_str, side, params["positionSide"], 'LIMIT', price, qty, sym))
     # 以设置的允许下跌区间分批挂单
-    qty = ori_qty / qtyrate / 4 * 2 / lossLimitNum
+    qty = ori_qty / qtyrate / 3 / lossLimitNum
     qty = max(float(exchange.amount_to_precision(sym, abs(qty))), minqty)
     params = {
         "positionSide": position,
@@ -193,11 +209,11 @@ def closeprocess(olddict):
           "symbol:%s\t" % (sym),
           "position:%s\t" % (position),
           "side:%s\t" % (side),
-          "quantity:%.5f\t" % (ori_qty),
+          "quantity:%.5f\t" % (abs(ori_qty)),
           "price:%.5f\t" % (price),
           "time:%s" % (temptime)
           )
-    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': ori_qty, "price": price, "operate": "平仓"}
+    row = {"symol": sym, 'time': temptime, 'position': position, 'side': side, 'quantity': abs(ori_qty), "price": price, "operate": "平仓"}
     csv_w.writerow(row)
     csv_f.flush()
     qty =  max(float(exchange.amount_to_precision(sym, abs(ori_qty) / qtyrate)), minqty)
